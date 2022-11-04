@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "human_footprint"
+version = "0.1.0"
+description = "Evolution of human settlement footprint"
+authors = ["Arthur Collard <arthur.collard@hotmail.fr>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+notebook = "^6.4.12"
+jupyterlab = "^3.4.8"
+jupyter-contrib-nbextensions = "^0.5.1"
+jupyter-nbextensions-configurator = "^0.5.0"
+tensorflow-macos = "^2.10.0"
+folium = "^0.13.0"
+earthengine-api = "^0.1.330"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

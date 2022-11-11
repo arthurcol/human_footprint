@@ -14,6 +14,8 @@ jupyter-nbextensions-configurator = "^0.5.0"
 tensorflow-macos = "^2.10.0"
 folium = "^0.13.0"
 earthengine-api = "^0.1.330"
+black = "^22.10.0"
+pytest = "^7.2.0"
 
 [tool.poetry.dev-dependencies]
 

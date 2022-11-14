@@ -64,8 +64,6 @@ class ImageryDataset(ee.ImageCollection):
     def export_to_GS(self, test_split, task_name):
         sample_to_export = self.sample_imagery_L8SR(add_wsf_band=True)
 
-        training = sample_to_export
-
         self.export_task = ee.batch.Export.image.toCloudStorage(
             image=sample_to_export,
             description=f"{task_name} - training",
@@ -80,15 +78,15 @@ class ImageryDataset(ee.ImageCollection):
                 "compressed": True,
             },
         )
-        self.training_task.start()
+        self.export_task.start()
 
     def monitor_export(self):
 
-        while self.training_task.active():
+        while self.export_task.active():
             status = ee.data.listOperations()
 
             for i, dic in enumerate(status):
-                if dic["name"].split("/")[-1] == self.training_task.id:
+                if dic["name"].split("/")[-1] == self.export_task.id:
                     pprint(dic["metadata"])
                     print("-----------------------------------", "", sep="\n")
             time.sleep(60)

@@ -82,7 +82,7 @@ if __name__ == "__main__":
             f"loss must be one of `jaccard` or `dice`. Received {args.loss}"
         )
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
 
     # metrics
     iou_score = tf.keras.metrics.BinaryIoU(target_class_ids=[1], name="iou_score")
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     # callbacks
     lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(
-        monitor="val_loss", factor=0.2, patience=2, min_lr=0.0001, verbose=1
+        monitor="val_loss", factor=0.5, patience=2, min_lr=0.00001, verbose=1
     )
     csv_logger = tf.keras.callbacks.CSVLogger(
         os.path.join(PATH_CSV_LOG, f"{args.exp_name}.csv")
@@ -128,5 +128,5 @@ if __name__ == "__main__":
         epochs=int(args.epochs),
         callbacks=[lr_scheduler, csv_logger, es, checkpoints],
         validation_data=val_dataset,
-        verbose=2,
+        verbose="auto",
     )

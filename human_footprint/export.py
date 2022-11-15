@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     france_borders = (
         ee.FeatureCollection("FAO/GAUL/2015/level1")
-        .filter('ADM0_NAME == "France"')
+        .filter('ADM0_NAME == "Belgium"')
         .geometry()
     )
     image = ImageryDataset(
@@ -25,5 +25,5 @@ if __name__ == "__main__":
         date_of_interest=("2015-01-01", "2015-12-31"),
     )
 
-    image.export_to_GS(test_split=0.3, task_name="france_2015")
+    image.export_to_GS(task_name="belgium_2015/belgium_2015")
     image.monitor_export()

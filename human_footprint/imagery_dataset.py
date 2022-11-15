@@ -71,12 +71,12 @@ class ImageryDataset(ee.ImageCollection):
             return sample.addBands(wsf_band)
         return sample
 
-    def export_to_GS(self, test_split, task_name):
+    def export_to_GS(self, task_name):
         sample_to_export = self.sample_imagery_L8SR(add_wsf_band=True)
 
         self.export_task = ee.batch.Export.image.toCloudStorage(
             image=sample_to_export,
-            description=f"{task_name} - training",
+            description=f"{task_name.split('/')[0]}",
             bucket="human-footprint",
             fileNamePrefix=task_name,
             fileFormat="TFRecord",

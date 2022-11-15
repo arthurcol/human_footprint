@@ -1,10 +1,20 @@
+import json
 import time
 from pprint import pprint
+from typing import Dict, List
 
 import ee
+import tensorflow as tf
+from google.cloud import storage
 
 
 class ImageryDataset(ee.ImageCollection):
+    """
+    Instantiate an object able to generate Earth Enfine images and launch tasks
+    to export them to GCS.
+    Inherits from `earthengine.ImageCollection`
+    """
+
     def __init__(self, *args, date_of_interest, area_of_interest):
         assert (
             isinstance(date_of_interest, tuple) and len(date_of_interest) == 2
@@ -90,3 +100,125 @@ class ImageryDataset(ee.ImageCollection):
                     pprint(dic["metadata"])
                     print("-----------------------------------", "", sep="\n")
             time.sleep(60)
+
+
+class ImageryDatasetParser:  # TODO check
+    """
+    Instantiate a function to map over a `tf.data.Dataset` to be able to parse
+    the SR images loaded into tfrecords file by `ImageryDataset`
+    """
+
+    def __init__(self, mixer_file, band_names, label):
+        self.patch_width = mixer_file["patchDimensions"][0]
+        self.patch_height = mixer_file["patchDimensions"][1]
+        self.patches = mixer_file["totalPatches"]
+        self.band_names = band_names
+        self.label = label
+        self.image_columns = [
+            tf.io.FixedLenFeature(
+                shape=[self.patch_width, self.patch_height], dtype=tf.float32
+            )
+            for k in self.band_names
+        ] + [
+            tf.io.FixedLenFeature(
+                shape=[self.patch_width, self.patch_height, 1], dtype=tf.int64
+            )
+        ]
+
+        self.image_features_dict = dict(
+            zip(self.band_names + [self.label], self.image_columns)
+        )
+
+    def __call__(self, example_proto):
+        parsed_features = tf.io.parse_example(example_proto, self.image_features_dict)
+        label = parsed_features.pop(self.label)
+
+        # B4 = red ; B3 = green ; B2 = blue
+        img = tf.stack(
+            [parsed_features[band] for band in self.band_names],
+            -1,
+        )
+
+        return img, label
+
+
+def download_gcs(bucket_name: str, blob_name: str) -> str:
+    """Helper function to download files from GCS buckets, files being returned
+    as string.
+
+    Parameters
+    ----------
+    bucket_name : str
+        Name of the bucket the file is in.
+    blob_name : str
+        name of the file. / indicates a path
+
+    Returns
+    -------
+    str
+        file as string - will need to be decoded
+    """
+    storage_client = storage.Client()
+
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    contents = blob.download_as_string()
+    return contents
+
+
+def get_mixer_json(bucket_name, blob_name) -> Dict:
+    """Wrapper function to specifically download a json, using `download_gc`
+    function.
+
+    Parameters
+    ----------
+    bucket_name : str
+        Name of the bucket the file is in.
+    blob_name : str
+        name of the file. / indicates a path
+
+    Returns
+    -------
+    Dict
+    """
+    content = download_gcs(bucket_name, blob_name)
+    return json.loads(content)
+
+
+def list_blobs(
+    bucket_name: str,
+    prefix: str = None,
+    delimiter: str = None,
+    extension: str = "tfrecord.gz",
+) -> List:
+    """List all files in a bucket, possibly filtered with extension.
+
+    Parameters
+    ----------
+    bucket_name : str
+        Name of the bucket the files are in
+    prefix : str, optional
+        prefix of the files, / indicates a path if specified in the delimiter `
+        argument, by default None
+    delimiter : str, optional
+        character to be interpreted as a path delimiter, if present in the
+        prefix, by default None
+    extension : str, optional
+        If provided, the function returns only files with this extension,
+        by default "tfrecord.gz"
+
+    Returns
+    -------
+    List
+        List of all file names meeting given conditions.
+    """
+
+    storage_client = storage.Client()
+    blobs = storage_client.list_blobs(bucket_name, prefix=prefix, delimiter=delimiter)
+
+    file_names = [
+        f"gs://{bucket_name}/{blob.name}"
+        for blob in blobs
+        if blob.name.endswith(extension)
+    ]
+    return file_names

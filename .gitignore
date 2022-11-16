@@ -7,3 +7,4 @@ notebooks/
 
 *.csv
 checkpoints/*/
+*.hdf5

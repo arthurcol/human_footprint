@@ -8,3 +8,4 @@ notebooks/
 *.csv
 checkpoints/*/
 *.hdf5
+nohup.out

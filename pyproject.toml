@@ -21,6 +21,7 @@ isort = "^5.10.1"
 pydot = "^1.4.2"
 graphviz = "^0.20.1"
 tensorflow-metal = {version="^0.6.0",markers="sys_platform == 'darwin'"}
+matplotlib = "^3.6.2"
 
 [tool.poetry.dev-dependencies]
 

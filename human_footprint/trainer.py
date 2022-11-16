@@ -41,6 +41,11 @@ def create_parser():
     return parser
 
 
+def filter_fn(x, y):
+    y_flat_sum = tf.reduce_sum(y)
+    return tf.math.greater(y_flat_sum / (256 * 256), 0.2)
+
+
 if __name__ == "__main__":
 
     parser = create_parser()
@@ -53,14 +58,19 @@ if __name__ == "__main__":
     mixer = get_mixer_json(BUCKET, BLOB_JSON)
 
     parser_fn = ImageryDatasetParser(mixer_file=mixer, band_names=BANDS, label=LABEL)
+    ds_size = parser_fn.patches * 0.4  # for BE take all
 
     parsed_dataset = dataset.map(parser_fn)
-    train_dataset = parsed_dataset.take(
-        int(parser_fn.patches * float(args.val_split))
-    ).batch(int(args.batch_size))
-    val_dataset = parsed_dataset.skip(
-        int(parser_fn.patches * float(args.val_split))
-    ).batch(int(args.batch_size))
+    train_dataset = (
+        parsed_dataset.take(int(ds_size * float(args.val_split)))
+        .filter(filter_fn)
+        .batch(int(args.batch_size))
+    )
+    val_dataset = (
+        parsed_dataset.skip(int(ds_size * float(args.val_split)))
+        .filter(filter_fn)
+        .batch(int(args.batch_size))
+    )
 
     # instantiate model
     print("Instantiate model...")
@@ -91,20 +101,19 @@ if __name__ == "__main__":
 
     # callbacks
     lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(
-        monitor="val_loss", factor=0.5, patience=2, min_lr=0.00001, verbose=1
+        monitor="val_loss", factor=0.5, patience=1, min_lr=0.00001, verbose=1
     )
     csv_logger = tf.keras.callbacks.CSVLogger(
         os.path.join(PATH_CSV_LOG, f"{args.exp_name}.csv")
     )
 
     es = tf.keras.callbacks.EarlyStopping(
-        monitor="val_loss", patience=3, restore_best_weights=True, verbose=1
+        monitor="val_loss", patience=2, restore_best_weights=True, verbose=1
     )
 
     checkpoints = tf.keras.callbacks.ModelCheckpoint(
         filepath=os.path.join(
             PATH_CHECKPOINTS,
-            "parser.exp_name",
             "weights.{epoch:02d}-{val_loss:.2f}.hdf5",
         ),
         monitor="val_iou_score",

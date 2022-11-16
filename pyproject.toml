@@ -6,12 +6,13 @@ authors = ["Arthur Collard <arthur.collard@hotmail.fr>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.10,<3.11"
 notebook = "^6.4.12"
 jupyterlab = "^3.4.8"
 jupyter-contrib-nbextensions = "^0.5.1"
 jupyter-nbextensions-configurator = "^0.5.0"
-tensorflow-macos = "^2.10.0"
+
+tensorflow = {version="^2.10",markers="sys_platform == 'linux'"}
 folium = "^0.13.0"
 earthengine-api = "^0.1.330"
 black = "^22.10.0"
@@ -19,7 +20,8 @@ pytest = "^7.2.0"
 isort = "^5.10.1"
 pydot = "^1.4.2"
 graphviz = "^0.20.1"
-tensorflow-metal = "^0.6.0"
+tensorflow-metal = {version="^0.6.0",markers="sys_platform == 'darwin'"}
+matplotlib = "^3.6.2"
 
 [tool.poetry.dev-dependencies]
 

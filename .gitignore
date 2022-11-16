@@ -4,3 +4,8 @@ __pycache__/
 .python-version
 .env
 notebooks/
+
+*.csv
+checkpoints/*/
+*.hdf5
+nohup.out

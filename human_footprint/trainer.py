@@ -58,17 +58,17 @@ if __name__ == "__main__":
     mixer = get_mixer_json(BUCKET, BLOB_JSON)
 
     parser_fn = ImageryDatasetParser(mixer_file=mixer, band_names=BANDS, label=LABEL)
-    ds_size = parser_fn.patches * 0.4  # for BE take all
+    ds_size = parser_fn.patches * 0.5  # for BE take all
 
     parsed_dataset = dataset.map(parser_fn)
     train_dataset = (
         parsed_dataset.take(int(ds_size * float(args.val_split)))
-        .filter(filter_fn)
+        # .filter(filter_fn)
         .batch(int(args.batch_size))
     )
     val_dataset = (
         parsed_dataset.skip(int(ds_size * float(args.val_split)))
-        .filter(filter_fn)
+        # .filter(filter_fn)
         .batch(int(args.batch_size))
     )
 
@@ -87,6 +87,10 @@ if __name__ == "__main__":
         loss = DiceLoss()
     elif args.loss == "jaccard":
         loss = JaccardLoss()
+    elif args.loss == "focal":
+        loss = tf.keras.losses.BinaryFocalCrossentropy(
+            apply_class_balancing=True, alpha=0.25, gamma=2
+        )
     else:
         raise ValueError(
             f"loss must be one of `jaccard` or `dice`. Received {args.loss}"

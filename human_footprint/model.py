@@ -1,5 +1,7 @@
 import tensorflow as tf
 
+from human_footprint.layers import BottleneckBlock, DecoderBlock, EncoderBlock
+
 
 class UnetLandcover(tf.keras.Model):
     def __init__(
@@ -147,3 +149,94 @@ class UnetLandcover(tf.keras.Model):
             inputs=model.inputs,
             outputs=skips + [model.get_layer(last_layer_name).output],
         )
+
+
+def DrawMeVanillaUnet():
+
+    inputs = tf.keras.layers.Input((224, 224, 3))
+
+    ##ENCODERS
+    c1, res1 = EncoderBlock(
+        64,
+        True,
+        0.2,
+    )(inputs)
+    c2, res2 = EncoderBlock(
+        128,
+        True,
+        0.2,
+    )(c1)
+    c3, res3 = EncoderBlock(
+        256,
+        True,
+        0.2,
+    )(c2)
+    c4, res4 = EncoderBlock(
+        512,
+        True,
+        0.2,
+    )(c3)
+
+    # BOTTLENECK
+    bottleneck = BottleneckBlock(
+        512,
+        True,
+        0.2,
+    )(c4)
+
+    # DECODERS
+    d4 = DecoderBlock(512, True, 0.2)(bottleneck, res4)
+    d3 = DecoderBlock(256, True, 0.2)(d4, res3)
+    d2 = DecoderBlock(128, True, 0.2)(d3, res2)
+    d1 = DecoderBlock(64, True, 0.2)(d2, res1)
+
+    ##FINAL
+    output = tf.keras.layers.Conv2D(1, kernel_size=1, strides=1, activation="sigmoid")(
+        d1
+    )
+    unet = tf.keras.Model(inputs=inputs, outputs=output)
+
+    return unet
+
+
+def create_vgg_backbone():
+    vgg = tf.keras.applications.vgg16.VGG16(
+        include_top=False, pooling="None", input_shape=(224, 224, 3)
+    )
+    layer_names = [
+        "block1_conv2",
+        "block2_conv2",
+        "block3_conv3",
+        "block4_conv3",
+        "block5_conv3",
+    ]
+    layers_residuals = [vgg.get_layer(name).output for name in layer_names]
+    backbone = tf.keras.Model(inputs=vgg.input, outputs=layers_residuals)
+    backbone.trainable = False
+    return backbone
+
+
+def DrawMeUnetVGG():
+    inputs = tf.keras.layers.Input((224, 224, 3))
+
+    backbone = create_vgg_backbone()
+    skips = backbone(inputs)
+
+    x = skips[-1]
+    skips = reversed(skips[:-1])
+
+    d4 = DecoderBlock(512, True, 0.2)
+    d3 = DecoderBlock(256, True, 0.2)
+    d2 = DecoderBlock(128, True, 0.2)
+    d1 = DecoderBlock(64, True, 0.2)
+
+    decoders = [d4, d3, d2, d1]
+
+    for d, res in zip(decoders, skips):
+        x = d(x, res)
+
+    outputs = tf.keras.layers.Conv2D(1, kernel_size=1, strides=1, activation="sigmoid")(
+        x
+    )
+    model = tf.keras.Model(inputs=inputs, outputs=outputs)
+    return model

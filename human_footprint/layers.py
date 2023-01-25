@@ -41,6 +41,8 @@ class DecoderBlock(tf.keras.layers.Layer):
         self.upsampling = tf.keras.layers.UpSampling2D(size=(2, 2))
         self.concat = tf.keras.layers.Concatenate()
 
+        super(DecoderBlock, self).__init__()
+
     def call(self, inputs, residuals):
         x = self.upsampling(inputs)
         x = self.concat([x, residuals])

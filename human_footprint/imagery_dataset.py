@@ -53,13 +53,13 @@ class ImageryDataset(ee.ImageCollection):
 
     def sample_imagery_L8SR(self, add_wsf_band=True):
         wsf_image = (
-            ee.Image("DLR/WSF/WSF2015/v1")
-            .unmask()
-            .remap([255, 0], [1, 0])
-            .rename("settlement")
+            ee.Image('COPERNICUS/CORINE/V20/100m/2012')
+            # .unmask()
+            # .remap([255, 0], [1, 0])
+            # .rename("settlement")
         )
-        wsf_band = wsf_image.select(["settlement"])
-        wsf_band = wsf_band.cast({"settlement": "int64"})
+        wsf_band = wsf_image.select(["landcover"])
+        # wsf_band = wsf_band.cast({"settlement": "int64"})
         sample = (
             self.filterDate(self.doi[0], self.doi[1])
             .filterBounds(self.aoi)
@@ -77,7 +77,7 @@ class ImageryDataset(ee.ImageCollection):
         self.export_task = ee.batch.Export.image.toCloudStorage(
             image=sample_to_export,
             description=f"{task_name.split('/')[0]}",
-            bucket="human-footprint",
+            bucket="1117_projects",
             fileNamePrefix=task_name,
             fileFormat="TFRecord",
             maxPixels=1e13,

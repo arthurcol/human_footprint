@@ -12,8 +12,8 @@ jupyterlab = "^3.4.8"
 jupyter-contrib-nbextensions = "^0.5.1"
 jupyter-nbextensions-configurator = "^0.5.0"
 
-tensorflow-macos = {version="^2.10",markers="sys_platform == 'darwin'"}
-tensorflow = {version="^2.10",markers="sys_platform == 'linux'"}
+tensorflow-macos = {version="~2.9",markers="sys_platform == 'darwin'"}
+tensorflow = {version="~2.9",markers="sys_platform == 'linux'"}
 folium = "^0.13.0"
 earthengine-api = "^0.1.330"
 black = "^22.10.0"
@@ -21,8 +21,11 @@ pytest = "^7.2.0"
 isort = "^5.10.1"
 pydot = "^1.4.2"
 graphviz = "^0.20.1"
-tensorflow-metal = {version="^0.6.0",markers="sys_platform == 'darwin'"}
+tensorflow-metal = {version="~0.5.0",markers="sys_platform == 'darwin'"}
 matplotlib = "^3.6.2"
+google-cloud = "^0.34.0"
+protobuf = "~3.20"
+pandas = "^1.5.3"
 
 [tool.poetry.dev-dependencies]
 
